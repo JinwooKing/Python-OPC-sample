@@ -1,23 +1,149 @@
-from opcua import Client
+# -*- coding: utf-8 -*-
+import sys
 import opchelper as helper 
+import re
+import datetime
+from opcua import Client
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
-# OPC UA ¼­¹ö¿¡ ¿¬°á
-client = Client("opc.tcp://000.000.000.000:51235")
+class MyApp(QWidget):
 
-# ¿¬°á
-client.connect()
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+    def initUI(self):
+        # url_group
+        self.url_group = QGroupBox('URL')
+        self.url_le = QLineEdit()
+        self.url_le.setPlaceholderText('ex) opc.tcp://000.000.000.000:51235') 
+        self.url_le.setFocus()
+        # nodeid_group
+        self.nodeid_group = QGroupBox('NodeId')
+        self.nodeid_le = QLineEdit()
+        self.nodeid_le.setPlaceholderText('ex) ns=12;i=100,ns=12;i=101')
+        # search_group
+        self.search_group = QGroupBox('Search')
+        self.search_label = QLabel('Type:')
+        self.search_cb = QComboBox()
+        self.search_cb.addItem('current')
+        self.search_cb.addItem('history')
 
-# ´ÜÀÏ ³ëµåÀÇ ÇöÀç °ª Ãâ·Â
-helper.get_current_node_value(client)
+        self.search_stdt_label = QLabel('start time:')
+        self.search_stdt = QDateTimeEdit(self)
+        self.search_stdt.setDateTime(datetime.datetime.now() - datetime.timedelta(hours=1))
+        self.search_stdt.setDateTimeRange(datetime.datetime(2015, 1, 1, 00, 00, 00), datetime.datetime.now())
+        self.search_stdt.setDisplayFormat('yyyy.MM.dd hh:mm:ss')
 
-# ´Ù¼ö ³ëµåÀÇ ÇöÀç °ª Ãâ·Â
-helper.get_current_nodes_values(client)
+        self.search_enddt_label = QLabel('end time:')
+        self.search_enddt = QDateTimeEdit(self)
+        self.search_enddt.setDateTime(datetime.datetime.now())
+        self.search_enddt.setDateTimeRange(datetime.datetime(2015, 1, 1, 00, 00, 00), datetime.datetime.now())
+        self.search_enddt.setDisplayFormat('yyyy.MM.dd hh:mm:ss')
 
-# ´ÜÀÏ ³ëµåÀÇ °ú°Å °ª(History) Ãâ·Â
-helper.get_histroy_node_value(client)
+        self.search_stdt.setReadOnly(True)
+        self.search_enddt.setReadOnly(True)
 
-# ´Ù¼ö ³ëµåÀÇ °ú°Å °ª(Histroy) Ãâ·Â
-helper.get_history_nodes_values(client)
+        self.search_btn = QPushButton('Search', self)
+        self.search_btn.clicked.connect(self.search)
+        
 
-# OPC UA ¼­¹ö ¿¬°á Á¾·á
-client.disconnect()
+        # activated.connect
+        self.search_cb.activated.connect(self.search_changed)
+
+        # url_layout
+        self.url_layout = QGridLayout()
+        self.url_layout.addWidget(self.url_le, 0, 0)
+        self.url_group.setLayout(self.url_layout)
+
+        # nodeid_layout
+        self.nodeid_layout = QGridLayout()
+        self.nodeid_layout.addWidget(self.nodeid_le, 0, 0)
+        self.nodeid_group.setLayout(self.nodeid_layout)
+
+        # search_layout
+        self.search_layout = QGridLayout()
+        self.search_layout.addWidget(self.search_label, 0, 0)
+        self.search_layout.addWidget(self.search_cb, 0, 1)
+        self.search_layout.addWidget(self.search_stdt_label, 1, 0)
+        self.search_layout.addWidget(self.search_stdt, 1, 1, 1, 2)
+        self.search_layout.addWidget(self.search_enddt_label, 1, 4)
+        self.search_layout.addWidget(self.search_enddt, 1, 5, 1, 2)
+        self.search_layout.addWidget(self.search_btn, 0, 5, 1, 2)
+        self.search_group.setLayout(self.search_layout)
+        
+        # layout
+        self.layout = QGridLayout()
+        self.layout.addWidget(self.url_group, 0, 0)
+        self.layout.addWidget(self.nodeid_group, 1, 0)
+        self.layout.addWidget(self.search_group, 2, 0)
+
+        self.te = QTextEdit()
+        self.te.setAcceptRichText(True)
+        self.layout.addWidget(self.te, 3, 0, 5, 0)
+        #self.layout.addWidget(self.serch_btn_group,1, 1)
+        
+        self.setLayout(self.layout)
+
+        # Windows location, scale
+        self.resize(500, 450)
+        
+        self.center()
+        
+        self.show()
+
+    def search(self):
+        url = self.url_le.text()      
+        url_regex = re.compile(r"opc\.tcp:\/\/([^:]+):?(\d*)\/?(.*)")
+        match = url_regex.match(url)
+        if(match == None):
+            self.te.setText("ìœ íš¨í•œ URLì„ ì…ë ¥í•´ ì£¼ì„¸ìš”")
+            return
+
+        nodeid = self.nodeid_le.text()
+        if "ns=" not in nodeid or ";i=" not in nodeid :
+            self.te.setText("ìœ íš¨í•œ NodeIdë¥¼ ì…ë ¥í•´ ì£¼ì„¸ìš”")
+            return
+
+        if ',' in nodeid:
+            nodeid = nodeid.split(',')
+
+        # OPC UA Server connect
+        client = Client(url)
+        client.connect()
+
+        if self.search_cb.currentIndex() == 0:
+            if type(nodeid) == str:            
+                rtnVal = helper.get_current_node_value(client, nodeid)
+            else:
+                rtnVal = helper.get_current_nodes_values(client, nodeid)
+        else:
+            stdt = self.search_stdt.dateTime().toPyDateTime()
+            enddt = self.search_enddt.dateTime().toPyDateTime()
+            if type(nodeid) == str:            
+                rtnVal = helper.get_histroy_node_value(client, nodeid, stdt, enddt)
+            else:
+                rtnVal = helper.get_history_nodes_values(client, nodeid, stdt, enddt)
+        self.te.setText(rtnVal)
+        # OPC UA Server disconnect
+        client.disconnect()
+
+    def search_changed(self, index):
+        if index == 0:
+            self.search_stdt.setReadOnly(True)
+            self.search_stdt.setReadOnly(True)
+        elif index == 1:
+            self.search_stdt.setReadOnly(False)     
+            self.search_enddt.setReadOnly(False)     
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+if __name__ == '__main__':
+   app = QApplication(sys.argv)
+   ex = MyApp()
+   sys.exit(app.exec_())
