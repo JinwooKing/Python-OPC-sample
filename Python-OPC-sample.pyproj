@@ -24,6 +24,7 @@
   <ItemGroup>
     <Compile Include="opchelper.py" />
     <Compile Include="Python_OPC_sample.py" />
+    <Compile Include="uihelper.py" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|ContinuumAnalytics|Anaconda39-64" />
@@ -31,6 +32,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="WATECH.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Helper\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
