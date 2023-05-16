@@ -31,10 +31,7 @@
     <InterpreterReference Include="Global|VisualStudio|Python39" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="WATECH.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Helper\" />
+    <Content Include="icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

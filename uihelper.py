@@ -87,8 +87,8 @@ class MyApp(QWidget):
         self.setLayout(self.layout)
 
         # Application Icon
-        self.setWindowTitle('WAT OPC UA Client')
-        self.setWindowIcon(QIcon('WATECH.ico'))
+        self.setWindowTitle('OPC UA Client')
+        self.setWindowIcon(QIcon('icon.ico'))
 
         # Windows location, scale
         self.resize(500, 450)
